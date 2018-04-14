@@ -22,37 +22,24 @@ def twoD_to_threeD(matrix):
 def warp_the_image(img, M_from, M_to):
     rows, cols, ch = img.shape
 
-    # pts1 = np.float32([[50, 50], [200, 50], [50, 200]])
-    # pts2 = np.float32([[10, 100], [200, 50], [100, 250]])
-
     M = cv.cv2.getAffineTransform(M_from, M_to)
     print ("Affine transform matrix is:")
     np.set_printoptions(suppress=True)
     print(M)
 
     dst = cv.cv2.warpAffine(img, M, (cols, rows))
-
     return dst
 
 
-
-
-
-winName = "WebCam"
-faceName = "Face_detected"
 active_picture_name = "Active_pic"
 sample_picture_name = "sample_pic"
 
 
-
-
-
-
-cv.namedWindow(winName)
-cv.namedWindow(faceName)
+#
+# cv.namedWindow(winName)
+# cv.namedWindow(faceName)
 cv.namedWindow(active_picture_name)
 cv.namedWindow(sample_picture_name)
-
 
 
 sample = "./baboon.jpg"
@@ -62,6 +49,8 @@ img_rows,img_cols,ch = img.shape # will be global wariables between transitions
 
 center_of_coordinates = get_center_of_an_image(img)
 
+# pts1 = np.float32([[50, 50], [200, 50], [50, 200]])
+# pts2 = np.float32([[10, 100], [200, 50], [100, 250]])
 
 pts1 = np.float32([[50, 50], [200, 50]])
 pts2 = np.float32([[10, 100], [200, 50]])
@@ -104,12 +93,6 @@ print(center_np)
 
 dst = warp_the_image (img, pts1_c, pts2_c)
 
-#
-# M = cv.cv2.getAffineTransform(pts1,pts2)
-#
-# dst = cv.cv2.warpAffine(img,M,(img_cols,img_rows))
-# cv.imshow(active_picture_name, dst)
-# cv.imshow(sample_picture_name, img)
 
 while True:
     cv.imshow(active_picture_name, dst)

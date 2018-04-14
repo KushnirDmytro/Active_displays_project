@@ -1,17 +1,20 @@
 import cv2 as cv
 # import scipyplot
 
-def detectEyes(
-                   frame,
-                       faceCascade,
-                           eyeCascade):
+def detectEyes(frame,
+               faceCascade,
+               eyeCascade):
 
 
   grayscale = cv.cv2.cvtColor(frame, cv.cv2.COLOR_BGR2GRAY) #; // convert image to grayscale
   grayscale = cv.cv2.equalizeHist(grayscale, grayscale) #; // enhance image contrast
 
   #TODO change to MOSSE_tracking  when face is detected (if it will deal with computing1)
+  #present in OpenCV
+# http://www.cs.colostate.edu/~vision/publications/bolme_cvpr10.pdf
 
+
+#TODO tune parameters for better face/eyes detection
   faces = faceCascade.detectMultiScale(grayscale, scaleFactor=1.3, minNeighbors=2, minSize=(50, 50),
                                    flags=cv.CASCADE_SCALE_IMAGE)
   for face in faces:
@@ -51,7 +54,6 @@ def detectEyes(
 
       cv.imshow(faceName, face_caption)
 
-      # for x1, y1, x2, y2 in face:
       frame = cv.rectangle(frame, (face_x, face_y), (face_x+face_w, face_y+face_h), color=(255, 0, 0), thickness=2)
 
 
@@ -61,7 +63,7 @@ def detectEyes(
 
 winName = "WebCam"
 faceName = "Face_detected"
-active_picture_name = "Active_pic"
+active_picture_name = "for_now_not_so_active_pic"
 
 try:
     cap = cv.VideoCapture(0)
@@ -93,6 +95,7 @@ except ValueError:
 
 try:
     eyeCascade.load("./haarcascades/haarcascade_eye_tree_eyeglasses.xml")
+    #todo customise 'eyeglasses' mode
 except ValueError:
     print("Could not load eye detector.")
     exit(-1)
