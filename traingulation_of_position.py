@@ -97,8 +97,8 @@ center_of_coordinates = get_center_of_an_image(img)
 pts1 = np.float32([[50, 50], [200, 50], [50, 200]])
 pts2 = np.float32([[10, 100], [200, 50], [100, 250]])
 
-# pts1 = np.float32([[50, 50], [200, 50]])
-# pts2 = np.float32([[10, 100], [200, 50]])
+pts1_2d = np.float32([[50, 50], [200, 50]])
+pts2_2d = np.float32([[10, 100], [200, 50]])
 
 print(len(pts1))
 for point_index in range (len(pts1)):
@@ -127,7 +127,8 @@ center_np = np.float32([center_of_coordinates[0], center_of_coordinates[1]])
 
 pts1_c = np.append(pts1, np.array([center_np]), axis=0)
 pts2_c = np.append(pts2, np.array([center_np]), axis=0)
-
+pts1_c_2d = np.append(pts1_2d, np.array([center_np]), axis=0)
+pts2_c_2d = np.append(pts2_2d, np.array([center_np]), axis=0)
 
 print(pts1_c)
 print(pts2_c)
@@ -155,14 +156,9 @@ print (dst3d)
 print (dst3d_2d)
 
 
+dst =  warp_the_image(img, pts1_c_2d ,pts2_c_2d)
 rows, cols, ch = img.shape
-
-M = cv.cv2.getAffineTransform(pts1, pts2)
-print ("Affine transform matrix is:")
-np.set_printoptions(suppress=True)
-print(M)
-
-dst = cv.cv2.warpAffine(img, M, (cols, rows))
+# dst = cv.cv2.warpAffine(img, M, (cols, rows))
 dst3d = cv.cv2.warpAffine(img, dst3d_2d, (cols, rows))
 # dst3d_2d = dst3d[]
 
