@@ -1,14 +1,4 @@
 import cv2 as cv
-import numpy as np
-
-H = np.identity(3)
-nOctaveLayers_ =  1
-contrastThreshold_  = 1
-edgeThreshold_ = 1
-sigma_ = 1
-n_features_ = 1
-
-cmp_value = 5.0
 
 def filter_matches(kp1, kp2, matches, ratio = 0.75):
     mkp1, mkp2 = [], []
@@ -93,18 +83,14 @@ def match_and_draw(win):
     raw_matches = matcher.knnMatch(desc1, trainDescriptors=desc2, k=2)  # 2
     p1, p2, kp_pairs = filter_matches(kp1, kp2, raw_matches)
     if len(p1) >= 4:
-        # cmp_value = 5.0
-        H, status = cv.findHomography(p1, p2, cv.RANSAC, cmp_value)
+        H, status = cv.findHomography(p1, p2, cv.RANSAC, 5.0)
         print('%d / %d  inliers/matched' % (np.sum(status), len(status)))
     else:
         H, status = None, None
         print('%d matches found, not enough for homography estimation' % len(p1))
 
-    vis_ = explore_match(win, img1, img2, kp_pairs, status, H)
-    return H, vis_
+    _vis = explore_match(win, img1, img2, kp_pairs, status, H)
 
-def nothing(x):
-    pass
 # from __future__ import print_function
 
 import numpy as np
@@ -129,32 +115,20 @@ feature_name = opts.get('--feature', 'sift')
 try:
     fn1, fn2 = args
 except:
-    # fn1 = './data/night_openCV_logo.png'
-    # fn2 = './data/opencv-logo.png'
-    fn1 = './data/night_baboon.png'
-    fn2 = './data/baboon.jpg'
+    fn1 = './data/ghosty_chess.png'
+    fn2 = './data/chessboard.png'
     # img1 = cv2.imread('./ghosty_chess.png', 0)
     # img2 = cv2.imread('./chessboard.png', 0)
 
 img1 = cv.imread(fn1, 0)
-original1 = cv.imread(fn1, 1)
 # clahe = cv.createCLAHE(clipLimit=1.0, tileGridSize=(20,20))
 # img1 = clahe.apply(img1)
 # cv.imshow("before", img1)
-
-# img1 = cv.equalizeHist(img1)
-
+img1 = cv.equalizeHist(img1)
 # cv.imshow("after", img1)
 
-
 img2 = cv.imread(fn2, 0)
-original2 = cv.imread(fn2, 1)
-# img2 = cv.resize(img2, (400, 400) )
-
-
-swap = img1
-img1 = img2
-img2 = swap
+img2 = cv.resize(img2, (400, 400) )
 
 # original = "./baboon.jpg"
 # projected_raw = "./bad_img_1.png"
@@ -168,14 +142,9 @@ win2_name = "bad_proj"
 
 def init_feature(name):
     chunks = name.split('-')
-    chunks += ['flann']
     if chunks[0] == 'sift':
         detector = cv.xfeatures2d.SIFT_create(
-            # nfeatures = n_features_,
-            # nOctaveLayers=nOctaveLayers_,
-            # contrastThreshold = contrastThreshold_ ,
-            # edgeThreshold =edgeThreshold_ ,
-            # sigma = sigma_
+            nOctaveLayers=8
         )
         norm = cv.NORM_L2
     elif chunks[0] == 'surf':
@@ -206,20 +175,19 @@ def init_feature(name):
     return detector, matcher
 
 
-
 detector, matcher = init_feature(feature_name)
 
-# if img1 is None:
-#     print('Failed to load fn1:', fn1)
-#     sys.exit(1)
-#
-# if img2 is None:
-#     print('Failed to load fn2:', fn2)
-#     sys.exit(1)
-#
-# if detector is None:
-#     print('unknown feature:', feature_name)
-#     sys.exit(1)
+if img1 is None:
+    print('Failed to load fn1:', fn1)
+    sys.exit(1)
+
+if img2 is None:
+    print('Failed to load fn2:', fn2)
+    sys.exit(1)
+
+if detector is None:
+    print('unknown feature:', feature_name)
+    sys.exit(1)
 
 print('using', feature_name)
 
@@ -228,61 +196,12 @@ kp2, desc2 = detector.detectAndCompute(img2, None)
 print('img1 - %d features, img2 - %d features' % (len(kp1), len(kp2)))
 
 
-H, vis_ = match_and_draw('find_obj')
-
-cv.createTrackbar('n_features','find_obj',1,100,nothing)
-cv.createTrackbar('nOctaveLayers','find_obj',1,10,nothing)
-cv.createTrackbar('contrastThreshold','find_obj',1,100,nothing)
-cv.createTrackbar('edgeThreshold','find_obj',1,10,nothing)
-cv.createTrackbar('sigma','find_obj',1,20,nothing)
-cv.createTrackbar('cmp_value','find_obj',1,20,nothing)
 
 
-while True:
 
-    n_features_ = cv.getTrackbarPos('n_features','find_obj')
-    nOctaveLayers_ = cv.getTrackbarPos('nOctaveLayers','find_obj')
-    contrastThreshold_  = cv.getTrackbarPos('contrastThreshold','find_obj') / 100
-    edgeThreshold_ = cv.getTrackbarPos('edgeThreshold','find_obj')
-    sigma_ = cv.getTrackbarPos('sigma','find_obj') / 10
-
-    print ("features: [{}] layers: [{}] contrast_tr: [{}] edge: [{}] sigma: [{}]".format(
-        n_features_,nOctaveLayers_,contrastThreshold_,edgeThreshold_,sigma_
-    ))
-
-    detector, matcher = init_feature(feature_name)
-    kp1, desc1 = detector.detectAndCompute(img1, None)
-    kp2, desc2 = detector.detectAndCompute(img2, None)
-    print('img1 - %d features, img2 - %d features' % (len(kp1), len(kp2)))
-    H, vis_ = match_and_draw('find_obj')
-
-
-    ch = cv.waitKey(1)
-    if ch == 27:  # ESC to out
-        break
+match_and_draw('find_obj')
+cv.waitKey()
 cv.destroyAllWindows()
-
-print ("SHAPE before: [{}]".format(original1.shape))
-
-a = cv.warpPerspective(original1, np.linalg.inv(H), dsize=img1.shape)
-
-print ("SHAPE final: [{}]".format(a.shape))
-
-while True:
-    cv.imshow('transformed', a)
-
-    ch = cv.waitKey(1)
-    if ch == 27:  # ESC to out
-        break
-cv.destroyAllWindows()
-cv.imwrite("encoded1.png", a)
-
-# static Ptr<SIFT> cv::xfeatures2d::SIFT::create	(	int 	nfeatures = 0,
-# int 	nOctaveLayers = 3,
-# double 	contrastThreshold = 0.04,
-# double 	edgeThreshold = 10,
-# double 	sigma = 1.6
-# )
 
 # while True:
 #     cv2.imshow(win1_name, orig)
