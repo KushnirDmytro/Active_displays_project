@@ -22,20 +22,20 @@ def warp_the_image_in_3d(img, M_from, M_to):
 
     rows, cols, ch = img.shape
 
-    M_from_3 = []
-    M_to_3 = []
+    M_from_3 = M_from
+    M_to_3 = M_to
     # print(M_from.shape[0])
     # M_to_3 = np.array(M_to.size)
-    for el in range(M_from.shape[0]):
-        M_from_3.append( np.array( [M_from[el][0],  M_from[el][1], 0] ) )
-        M_to_3.append( np.array([M_to[el][0], M_to[el][1], 0]) )
+    # for el in range(M_from.shape[0]):
+    #     M_from_3.append( np.array( [M_from[el][0],  M_from[el][1], 0] ) )
+    #     M_to_3.append( np.array([M_to[el][0], M_to[el][1], 0]) )
     # false_vector=  (M_from_3[0] + M_from_3[1]) // 2
     # M_from_3.append(false_vector)
 
-    M_from_3 = np.float64(M_from_3)
+    # M_from_3 = np.float64(M_from_3)
     # false_vector=  (M_to_3[0] + M_to_3[1]) // 2
     # M_to_3.append(false_vector)
-    M_to_3 = np.float64(M_to_3)
+    # M_to_3 = np.float64(M_to_3)
 
 
     retval, out, inliers = cv.cv2.estimateAffine3D(M_from_3, M_to_3)
@@ -94,8 +94,8 @@ img_rows,img_cols,ch = img.shape # will be global wariables between transitions
 
 center_of_coordinates = get_center_of_an_image(img)
 #
-pts1 = np.float32([[50, 50], [200, 50], [50, 200]])
-pts2 = np.float32([[10, 100], [200, 50], [100, 250]])
+pts1 = np.float32([[50, 50, 0], [200, 50, 0], [50, 200, 0]])
+pts2 = np.float32([[10, 100, 0], [200, 50, 0], [100, 250, 0]])
 
 pts1_2d = np.float32([[50, 50], [200, 50]])
 pts2_2d = np.float32([[10, 100], [200, 50]])
@@ -118,23 +118,24 @@ img = cv.circle(
             color=(0, 255, 255),
             thickness=2)
 
-pts1_refarding_center = pts1 - [center_of_coordinates[0], center_of_coordinates[1]]
-pts2_refarding_center = pts2 - [center_of_coordinates[0], center_of_coordinates[1]]
+# pts1_refarding_center = pts1 - [center_of_coordinates[0], center_of_coordinates[1]]
+# pts2_refarding_center = pts2 - [center_of_coordinates[0], center_of_coordinates[1]]
 
-center_np = np.float32([center_of_coordinates[0], center_of_coordinates[1]])
+center_np_2d = np.float32([center_of_coordinates[0], center_of_coordinates[1]])
+center_np = np.float32([center_of_coordinates[0], center_of_coordinates[1], 0])
 
 # Here we need to find such Affine transformation that preserves the center of coordinates
 
 pts1_c = np.append(pts1, np.array([center_np]), axis=0)
 pts2_c = np.append(pts2, np.array([center_np]), axis=0)
-pts1_c_2d = np.append(pts1_2d, np.array([center_np]), axis=0)
-pts2_c_2d = np.append(pts2_2d, np.array([center_np]), axis=0)
+pts1_c_2d = np.append(pts1_2d, np.array([center_np_2d]), axis=0)
+pts2_c_2d = np.append(pts2_2d, np.array([center_np_2d]), axis=0)
 
 print(pts1_c)
 print(pts2_c)
 
 print(pts1)
-print(pts1_refarding_center)
+# print(pts1_refarding_center)
 
 #np.concatenate(pts1, center_np, axis=1)
 # pts1, np.array([center_of_coordinates[0], center_of_coordinates[1]])

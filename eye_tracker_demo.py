@@ -1,12 +1,10 @@
 import cv2 as cv
-from traingulation_of_position import warp_the_image_in_3d
-import numpy as np
-import math
 # import scipyplot
 
 def detectEyes(frame,
                faceCascade,
                eyeCascade):
+
 
   grayscale = cv.cv2.cvtColor(frame, cv.cv2.COLOR_BGR2GRAY) #; // convert image to grayscale
   grayscale = cv.cv2.equalizeHist(grayscale, grayscale) #; // enhance image contrast
@@ -25,11 +23,11 @@ def detectEyes(frame,
       face_caption = grayscale[face_y:face_y + face_h, face_x:face_x + face_w]
       eyes = eyeCascade.detectMultiScale(face_caption, scaleFactor=1.3, minNeighbors=2, minSize=(20, 20),
                                    flags=cv.CASCADE_SCALE_IMAGE)
-      frame = cv.rectangle(frame, (face_x, face_y), (face_x + face_w, face_y + face_h), color=(255, 0, 0), thickness=2)
+
       eyes_centers = []
       for eye in eyes:
           (e_x, e_y, e_w, e_h) = eye
-          # print (eye)
+          print (eye)
           eyebox_corner1 =(face_x+ e_x,face_y+ e_y)
           eyebox_corner2 =(face_x+ e_x + e_w, face_y+e_y + e_h)
 
@@ -53,16 +51,12 @@ def detectEyes(frame,
                       radius=3,
                       color=(0, 0, 255),
                       thickness=2)
-              vector_to_sight = [sight_senter_x, sight_senter_y]
-
-
-
-              return vector_to_sight
 
       cv.imshow(faceName, face_caption)
 
+      frame = cv.rectangle(frame, (face_x, face_y), (face_x+face_w, face_y+face_h), color=(255, 0, 0), thickness=2)
 
-print("1")
+
 
 
 
@@ -71,24 +65,19 @@ winName = "WebCam"
 faceName = "Face_detected"
 active_picture_name = "for_now_not_so_active_pic"
 
-
-# camera_width = 800
-# camera_height = 600
-
-
 try:
     cap = cv.VideoCapture(0)
     cap.set(cv.cv2.CAP_PROP_FPS, 60.0)
     # TODO get detailed infro how to increase framerate and quality, now control is poor
     #TODO make multithreaded video processing
 
-    # cap.set(cv.cv2.CAP_PROP_FRAME_WIDTH, camera_width)
-    # cap.set(cv.cv2.CAP_PROP_FRAME_HEIGHT, camera_height)
-
+    cap.set(cv.cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv.cv2.CAP_PROP_FRAME_HEIGHT, 480)
 except ValueError:
     if (not cap.isOpened()):
         print("Failed to init camera")
         exit(-1)
+
 
 
 cv.namedWindow(winName)
@@ -97,11 +86,6 @@ cv.namedWindow(active_picture_name)
 
 eyeCascade = cv.CascadeClassifier()
 faceCascade = cv.CascadeClassifier()
-
-
-#LETITBE
-distance_to_face = 1000
-
 
 try :
     faceCascade.load("./haarcascades/haarcascade_frontalface_alt.xml")
@@ -116,67 +100,18 @@ except ValueError:
     print("Could not load eye detector.")
     exit(-1)
 
-# sample = "./baboon.jpg"
-# img = cv.imread(sample)
+sample = "./baboon.jpg"
+img = cv.imread(sample)
 # print(type(img))
 
-
-_, frame = cap.read()
-
-frame_X, frame_Y, depth = frame.shape
-camera_center = (frame_X//2, frame_Y//2)
-print (camera_center)
-
-# new_img = img
-# img_X, img_Y, _ = img.shape
-# img_center = (img_X//2, img_Y //2)
 while True:
 
 
     _, frame = cap.read()
-    camera_sight_pos = detectEyes(frame, faceCascade, eyeCascade)
-
-    if (camera_sight_pos):
-        print ("CSP:{}".format(camera_sight_pos))
-        face_shift_from_center_of_camera = [camera_sight_pos[0] - camera_center[0], camera_sight_pos[1] - camera_center[1]]
-        print("CenterShift:{}".format(face_shift_from_center_of_camera))
-        camera_shift_relative = (face_shift_from_center_of_camera[0]/frame_X, face_shift_from_center_of_camera[1]/frame_Y)
-
-        # projection_on_standart_plane = (img_X*camera_shift_relative[0] ,  img_Y * camera_shift_relative[1])
-
-        # z_coord = math.sqrt (distance_to_face*distance_to_face - projection_on_standart_plane[0]*projection_on_standart_plane[0] - \
-        #           projection_on_standart_plane[1]*projection_on_standart_plane[1])
-        
-        # ptsSrc = np.array([
-        #     [img_X, 0, 0],
-        #     [img_X, img_Y, 0],
-        #     [img_center[0], img_center[1], 0], #the same
-        #     [projection_on_standart_plane[0], projection_on_standart_plane[1], z_coord] #calculated
-        # ])
-        #
-        #
-        # ptsDest = ([
-        #     # [img_X, 0, 0],
-        #     # [img_X, img_Y, 0],
-        #     [img_center[0], img_center[1], 0],
-        #     [img_center[0], img_center[1], distance_to_face]
-        # ])
-
-        # new_img = warp_the_image_in_3d(imgX, )
-
-    frame = \
-        cv.circle(
-            img=frame,
-            center=(camera_center[1], camera_center[0]),
-            radius=3,
-            color=(255, 0, 255),
-            thickness=2)
-
+    detectEyes(frame, faceCascade, eyeCascade)
     cv.imshow(winName, frame)
-    #
-    #
-    #
-    # cv.imshow(active_picture_name, img)
+
+    cv.imshow(active_picture_name, img)
 
     (major_ver, minor_ver, subminor_ver) = (cv.__version__).split('.')
 
@@ -197,4 +132,3 @@ while True:
 
 
 cv.destroyAllWindows()
-# ========================================================================================================
