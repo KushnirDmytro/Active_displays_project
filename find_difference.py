@@ -28,13 +28,6 @@ print("LOSS2: [{}]".format(loss2) )
 dif_col2 = np.zeros(orig.shape, np.uint8)
 dif_col2[:] = [col2[0], col2[1], col2[2]]
 
-distort2 = distort1 + dif_col2
-diff3 = orig - distort2
-col3 = np.median(diff3, axis=[0,1])
-loss3 = np.mean(diff3)
-print("LOSS3: [{}]".format(loss3) )
-dif_col3 = np.zeros(orig.shape, np.uint8)
-dif_col3[:] = [col3[0], col3[1], col3[2]]
 
 while True:
 
@@ -46,9 +39,9 @@ while True:
     cv2.imshow("diff2", diff2)
     cv2.imshow("disstort1", distort1)
     cv2.imshow("diff_col2", dif_col2)
-    cv2.imshow("diff3", diff3)
-    cv2.imshow("disstort2", distort2)
-    cv2.imshow("diff_col3", dif_col3)
+    # cv2.imshow("diff3", diff3)
+    # cv2.imshow("disstort2", distort2)
+    # cv2.imshow("diff_col3", dif_col3)
 
     ch = cv2.waitKey(1)
     if ch == 27:  # ESC to out
