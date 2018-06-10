@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from find_correspondance_final import nothing, match_and_draw
-
+import copy
 
 #here are defined some usefull but long and irrelevant functions for image matching
 
@@ -53,7 +53,7 @@ init features extractor and matcher for homography matrix estimation
 def init_feature(args_dict):
     FLANN_INDEX_KDTREE = 1  # bug: flann enums are missing
     FLANN_INDEX_LSH =6
-    if 'detect_manual' in args_dict:
+    if 'detect_manual' in args_dict and args_dict['detect_manual'] == 1:
         detector = cv2.xfeatures2d.SIFT_create(
             nfeatures=args_dict['nfeatures'],
             nOctaveLayers=args_dict['nOctaveLayers'],
@@ -62,13 +62,7 @@ def init_feature(args_dict):
             sigma=args_dict['sigma'],
         )
     else:
-        detector = cv2.xfeatures2d.SIFT_create(
-            # nfeatures = n_features_,
-            # nOctaveLayers=nOctaveLayers_,
-            # contrastThreshold = contrastThreshold_ ,
-            # edgeThreshold =edgeThreshold_ ,
-            # sigma = sigma_
-        )
+        detector = cv2.xfeatures2d.SIFT_create( )
 
     norm = cv2.NORM_L2
 
@@ -105,15 +99,19 @@ cv2.createTrackbar(auto_switch, 'find_obj',0,1,nothing)
 
 
 
+def project_and_read(to_project):
+    pass
+
+
+
 
 while True:
     # cv2.imshow(src_proj_name, orig_src)
-
-    # _, img1 = cap.read(0)
-    img1 = cv2.imread("./data/semi_day_sample.png", 0)
-    # cv2.imwrite("./data/semi_day_sample.png", img1)
-    # img1 = cv2.cvtColor( img1, cv2.COLOR_BGR2GRAY )
-    img1 = cv2.equalizeHist(img1)
+    _, img1 = cap.read(0)
+    stored_capture = copy.copy(img1)
+    img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+    # img1 = cv2.equalizeHist(img1)
+    img1 = cv2.medianBlur(img1, 5)  # to improve quality of img
     img2 = orig_src
     img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
     swap = img1
@@ -145,24 +143,139 @@ while True:
         break
 
 cv2.destroyAllWindows()
+# stored_capture_name = "last_stored.png"
+# cv2.imwrite(stored_capture_name, stored_capture)
+
+""" 
+now in "last_stored.png" we have our image to improve further
+using homography matrix we'll carve from it part which corresponds to our original image
+"""
 
 
+#
+#
 while True:
 
-
-    _, webcam_input_frame = cap.read()
-    cv2.imshow(src_proj_name, orig_src)
-    cv2.imshow(webcam_input_name, webcam_input_frame)
-
-
-
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    print("Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}".format(fps))
-
+    cv2.imshow("difference", stored_capture)
 
     ch = cv2.waitKey(1)
     if ch == 27:  # ESC to out
         break
-
 cv2.destroyAllWindows()
+
+print (H)
+print (np.linalg.inv(H))
+carved_raw = cv2.warpPerspective(stored_capture, np.linalg.inv(H), dsize=orig_src.shape[1::-1])
+
+
+from picture_descent import subtract_mean_clr
+
+loss = np.mean(cv2.absdiff(orig_src, carved_raw))
+best_loss = loss
+# (orig, res, alpha, sim_treashhold
+while best_loss > 0:
+    best_src = copy.copy(orig_src)
+    new_src = subtract_mean_clr (orig=best_src, res=carved_raw, alpha=0.5,  sim_treashhold=5)
+    loss = np.mean(cv2.absdiff(new_src, carved_raw))
+    if loss <= best_loss:
+        best_src = new_src
+    print("LOSS [{}] BEST [{}]".format(loss, best_loss))
+
+
+#
+# diff1 = orig_src - carved_raw
+#
+# cv2.imwrite("carved.png", carved_raw)
+
+
+
+
+# difference_main_colour = np.median(diff1, axis=[0,1])
+# dif_col = np.zeros(orig_src.shape, np.uint8)
+# dif_col[:] = [difference_main_colour[0], difference_main_colour[1], difference_main_colour[2]]
+#
+# numpy_horizontal1 = np.hstack((orig_src, carved_raw, diff1))
+#
+# new_src = orig_src - (dif_col // 5)
+
+# difference_mask = #find regions where difference near moda
+
+# numpy_horizontal2 = np.hstack((diff1, dif_col, new_src ))
+
+
+
+# print(dif_col.shape)
+
+def optimise (original, resulting):
+    new_original = copy.copy(original)
+    best_original = copy.copy(new_original)
+
+    loss = np.mean(cv2.absdiff(original, resulting))
+    best_loss = loss
+
+    difference_matrix= cv2.subtract(original, resulting)
+    best_difference_matrix = copy.copy(difference_matrix)
+    difference_matrix = original - resulting
+
+    print("LOSS: [{}]".format(loss))
+    # new_original =
+    return loss, new_original
+
+
+
+while True:
+
+    cv2.imshow("difference", numpy_horizontal1)
+    cv2.imshow("difference_colours", numpy_horizontal2)
+    cv2.imshow("improved", carved_raw + dif_col)
+    loss = np.mean(diff1)
+    print("LOSS1: [{}]".format(loss))
+
+    ch = cv2.waitKey(1)
+    if ch == 27:  # ESC to out
+        break
+cv2.destroyAllWindows()
+
+
+while True:
+    cv2.imshow("best", new_src)
+    ch = cv2.waitKey(1)
+    if ch == 27:  # ESC to out
+        break
+cv2.destroyAllWindows()
+
+#
+# print(diff1.shape)
+#
+
+#
+# loss = np.mean(diff1)
+# print("LOSS1: [{}]".format(loss))
+#
+# distort1 = distort + dif_col
+# diff2 = orig - distort1
+# col2 = np.median(diff2, axis=[0,1])
+# loss2 = np.mean(diff2)
+# print("LOSS2: [{}]".format(loss2) )
+# dif_col2 = np.zeros(orig.shape, np.uint8)
+# dif_col2[:] = [col2[0], col2[1], col2[2]]
+#
+#
+# while True:
+#
+#
+#     _, webcam_input_frame = cap.read()
+#     cv2.imshow(src_proj_name, orig_src)
+#     cv2.imshow(webcam_input_name, webcam_input_frame)
+#
+#
+#     # fps = cap.get(cv2.CAP_PROP_FPS)
+#     # print("Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}".format(fps))
+#
+#
+#     ch = cv2.waitKey(1)
+#     if ch == 27:  # ESC to out
+#         break
+#
+# cv2.destroyAllWindows()
 
