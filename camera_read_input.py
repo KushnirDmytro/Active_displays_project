@@ -45,31 +45,3 @@ cv2.namedWindow(winName)
 # img = cv.imread(sample)
 # print(type(img))
 
-while True:
-
-
-    _, frame = cap.read()
-    # detectEyes(frame, faceCascade, eyeCascade)
-    cv2.imshow(winName, frame)
-
-    # cv.imshow(active_picture_name, img)
-
-    (major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
-
-    if int(major_ver) < 3:
-        pass
-        fps = cap.get(cv2.CV_CAP_PROP_FPS)
-        print("Frames per second using video.get(cv2.cv.CV_CAP_PROP_FPS): {0}".format(fps))
-    else:
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        print("Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}".format(fps))
-
-
-    ch = cv2.waitKey(1)
-    if ch == 27:  # ESC to out
-        break
-
-
-
-
-cv2.destroyAllWindows()
