@@ -88,7 +88,7 @@ def explore_match(win, img1, img2, kp_pairs, status = None, H = None):
     cv.setMouseCallback(win, onmouse)
     return vis
 
-def match_and_draw(win, img1, img2, desc1, desc2, kp1, kp2):
+def match_and_draw(win, img1, img2, desc1, desc2, kp1, kp2, matcher):
     print('matching...')
     raw_matches = matcher.knnMatch(desc1, trainDescriptors=desc2, k=2)  # 2
     p1, p2, kp_pairs = filter_matches(kp1, kp2, raw_matches)

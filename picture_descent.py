@@ -5,58 +5,39 @@ import numpy as np
 # orig = cv2.imread("./data/baboon.jpg")
 # carved = cv2.imread("./carved.png")
 
+import copy
 
-def subtract_mean_clr(orig, res, alpha, sim_treashhold):
-    diff = orig - res
-    difference_main_colour = np.median(diff, axis=[0, 1])
-    dif_col = np.zeros(orig.shape, np.uint8)
-    dif_col[:] = [difference_main_colour[0], difference_main_colour[1], difference_main_colour[2]]
-    dist_from_mean = cv2.absdiff(diff, dif_col)
-    dist_from_mean = cv2.cvtColor(dist_from_mean, cv2.COLOR_BGR2GRAY)
-    mask = np.zeros(orig.shape, np.uint8)
-    mask[dist_from_mean <= sim_treashhold] = [255, 255, 255]
-    diff_apply = np.bitwise_and(mask, np.array(diff // (1/alpha), dtype=np.uint8 ) )
-    new_best = orig - diff_apply
-    return new_best
+def subtract_mean_clr(orig, carved, alpha, sim_treashhold):
+    prev_mask_sum = -1
+    while True:
+        diff = orig - carved
+        difference_main_colour = np.median(diff, axis=[0, 1])
+        dif_col = np.zeros(orig.shape, np.uint8)
+        dif_col[:] = [difference_main_colour[0], difference_main_colour[1], difference_main_colour[2]]
 
-#
-# diff = orig - carved
-#
-# difference_main_colour = np.median(diff, axis=[0,1])
-# dif_col = np.zeros(orig.shape, np.uint8)
-# dif_col[:] = [difference_main_colour[0], difference_main_colour[1], difference_main_colour[2]]
-#
-# dist_from_mean = cv2.absdiff(diff, dif_col)
-#
-# # print(dist_from_mean.shape)
-#
-# dist_from_mean = cv2.cvtColor(dist_from_mean, cv2.COLOR_BGR2GRAY)
-#
-# mask = np.zeros(orig.shape, np.uint8)
-#
-#
-# mask[dist_from_mean <= 5 ] =  [255, 255, 255]
-#
-# print(mask.shape)
-#
-# diff_apply = np.bitwise_and(mask, diff)
-#
-#
-# horis = np.hstack( (orig, carved, diff) )
-# horis2 = np.hstack( (orig,  orig - diff_apply) )
-#
-#
-#
-# while True:
-#     cv2.imshow("or", horis)
-#     cv2.imshow("dist", dist_from_mean)
-#     cv2.imshow("mask", mask)
-#     cv2.imshow("apply_diff",  diff_apply)
-#     cv2.imshow("res",  horis2)
-#     # cv2.imshow("proj", carved)
-#     #
-#     ch = cv2.waitKey(1)
-#     if ch == 27:  # ESC to out
-#         break
-# cv2.destroyAllWindows()
-# # difference_mask = #find regions where difference near moda
+
+
+        dist_from_mean = cv2.absdiff(diff, dif_col)
+        # print(dist_from_mean.shape)
+        dist_from_mean = cv2.cvtColor(dist_from_mean, cv2.COLOR_BGR2GRAY)
+
+        or2 = copy.copy(orig)
+        inverted_colour = np.bitwise_not(dif_col, or2)
+        # cv2.imshow("experiment", res)
+
+        mask = np.zeros(orig.shape, np.uint8)
+
+        mask[dist_from_mean <= sim_treashhold] = [255, 255, 255]
+
+        print(mask.shape)
+
+        diff_apply = np.bitwise_and(mask, inverted_colour) # < =========
+        diff_apply = np.array(diff_apply * 1, dtype=np.uint8)
+
+        orig = np.bitwise_or(orig,diff_apply)
+
+        sum_mask = np.sum(mask)
+        if sum_mask <= 0 or prev_mask_sum == sum_mask:
+            break
+        prev_mask_sum = sum_mask
+    return orig

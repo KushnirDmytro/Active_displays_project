@@ -28,8 +28,9 @@ print("LOSS2: [{}]".format(loss2) )
 dif_col2 = np.zeros(orig.shape, np.uint8)
 dif_col2[:] = [col2[0], col2[1], col2[2]]
 
-
+import copy
 while True:
+
 
 
     cv2.imshow("orig", orig)
@@ -39,6 +40,16 @@ while True:
     cv2.imshow("diff2", diff2)
     cv2.imshow("disstort1", distort1)
     cv2.imshow("diff_col2", dif_col2)
+
+
+
+    or2 = copy.copy(orig)
+    res = np.bitwise_not(dif_col, or2)
+    cv2.imshow("experiment", res)
+
+    cv2.imshow("ex", np.hstack((orig, distort, diff1)))
+    cv2.imshow("ex2", np.hstack((diff1, dif_col, res)))
+
     # cv2.imshow("diff3", diff3)
     # cv2.imshow("disstort2", distort2)
     # cv2.imshow("diff_col3", dif_col3)

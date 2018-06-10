@@ -3,6 +3,8 @@ import numpy as np
 from find_correspondance_final import nothing, match_and_draw
 import copy
 
+
+
 #here are defined some usefull but long and irrelevant functions for image matching
 
 #=======================+STAGE 1+ detect ROI =======================
@@ -22,6 +24,7 @@ projected img
 """
 src_name = "./data/baboon.jpg"
 orig_src = cv2.imread(src_name,1)
+best_src = copy.copy(orig_src)
 src_proj_name = "src_proj"
 #============================================
 
@@ -79,15 +82,7 @@ def init_feature(args_dict):
 detector, matcher = init_feature({})
 
 
-img1 = cv2.imread("./data/box.png", 0)
-img2 = cv2.imread("./data/box_in_scene.png", 0)
-#TODO combine to single function
-kp1, desc1 = detector.detectAndCompute(img1, None)
-kp2, desc2 = detector.detectAndCompute(img2, None)
-print('img1 - %d features, img2 - %d features' % (len(kp1), len(kp2)))
-H, vis_ = match_and_draw('find_obj', img1=img1, img2=img2, desc1=desc1, desc2=desc2, kp1=kp1, kp2=kp2)
-
-
+cv2.imshow('find_obj', orig_src)
 cv2.createTrackbar('n_features','find_obj',1,100,nothing)
 cv2.createTrackbar('nOctaveLayers','find_obj',1,10,nothing)
 cv2.createTrackbar('contrastThreshold','find_obj',1,100,nothing)
@@ -106,11 +101,12 @@ def project_and_read(to_project):
 
 
 while True:
-    # cv2.imshow(src_proj_name, orig_src)
+
+    cv2.imshow('permanent_baboon', best_src)
+
     _, img1 = cap.read(0)
     stored_capture = copy.copy(img1)
     img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-    # img1 = cv2.equalizeHist(img1)
     img1 = cv2.medianBlur(img1, 5)  # to improve quality of img
     img2 = orig_src
     img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
@@ -142,9 +138,7 @@ while True:
     if ch == 27:  # ESC to out
         break
 
-cv2.destroyAllWindows()
-# stored_capture_name = "last_stored.png"
-# cv2.imwrite(stored_capture_name, stored_capture)
+cv2.destroyWindow('find_obj')
 
 """ 
 now in "last_stored.png" we have our image to improve further
@@ -152,19 +146,6 @@ using homography matrix we'll carve from it part which corresponds to our origin
 """
 
 
-#
-#
-while True:
-
-    cv2.imshow("difference", stored_capture)
-
-    ch = cv2.waitKey(1)
-    if ch == 27:  # ESC to out
-        break
-cv2.destroyAllWindows()
-
-print (H)
-print (np.linalg.inv(H))
 carved_raw = cv2.warpPerspective(stored_capture, np.linalg.inv(H), dsize=orig_src.shape[1::-1])
 
 
@@ -172,64 +153,34 @@ from picture_descent import subtract_mean_clr
 
 loss = np.mean(cv2.absdiff(orig_src, carved_raw))
 best_loss = loss
-# (orig, res, alpha, sim_treashhold
-while best_loss > 0:
-    best_src = copy.copy(orig_src)
-    new_src = subtract_mean_clr (orig=best_src, res=carved_raw, alpha=0.5,  sim_treashhold=5)
-    loss = np.mean(cv2.absdiff(new_src, carved_raw))
+new_src = best_src
+while True:
+    _, stored_capture = cap.read(0)
+
+    new_src = subtract_mean_clr (orig=orig_src, carved=carved_raw, alpha=0.2,  sim_treashhold=10)
+
+    cv2.imshow('permanent_baboon', best_src)
+    cv2.imshow('copy_baboon', best_src)
+    cv2.imshow('new_src', new_src)
+    cv2.imshow('carved', carved_raw)
+
+    carved_raw = cv2.warpPerspective(stored_capture, np.linalg.inv(H), dsize=orig_src.shape[1::-1])
+
+    loss = np.mean(cv2.absdiff(orig_src, carved_raw))
+    cv2.imshow('orig', orig_src)
+
     if loss <= best_loss:
-        best_src = new_src
+        best_src = copy.copy(new_src)
+        best_loss = loss
     print("LOSS [{}] BEST [{}]".format(loss, best_loss))
 
+    args_dict = {}
 
-#
-# diff1 = orig_src - carved_raw
-#
-# cv2.imwrite("carved.png", carved_raw)
-
-
-
-
-# difference_main_colour = np.median(diff1, axis=[0,1])
-# dif_col = np.zeros(orig_src.shape, np.uint8)
-# dif_col[:] = [difference_main_colour[0], difference_main_colour[1], difference_main_colour[2]]
-#
-# numpy_horizontal1 = np.hstack((orig_src, carved_raw, diff1))
-#
-# new_src = orig_src - (dif_col // 5)
-
-# difference_mask = #find regions where difference near moda
-
-# numpy_horizontal2 = np.hstack((diff1, dif_col, new_src ))
-
-
-
-# print(dif_col.shape)
-
-def optimise (original, resulting):
-    new_original = copy.copy(original)
-    best_original = copy.copy(new_original)
-
-    loss = np.mean(cv2.absdiff(original, resulting))
-    best_loss = loss
-
-    difference_matrix= cv2.subtract(original, resulting)
-    best_difference_matrix = copy.copy(difference_matrix)
-    difference_matrix = original - resulting
-
-    print("LOSS: [{}]".format(loss))
-    # new_original =
-    return loss, new_original
-
-
-
-while True:
-
-    cv2.imshow("difference", numpy_horizontal1)
-    cv2.imshow("difference_colours", numpy_horizontal2)
-    cv2.imshow("improved", carved_raw + dif_col)
-    loss = np.mean(diff1)
-    print("LOSS1: [{}]".format(loss))
+    detector, matcher = init_feature(args_dict)
+    kp1, desc1 = detector.detectAndCompute(img1, None)
+    kp2, desc2 = detector.detectAndCompute(img2, None)
+    print('img1 - %d features, img2 - %d features' % (len(kp1), len(kp2)))
+    H, vis_ = match_and_draw('find_obj', img1=img1, img2=img2, desc1=desc1, desc2=desc2, kp1=kp1, kp2=kp2)
 
     ch = cv2.waitKey(1)
     if ch == 27:  # ESC to out
@@ -237,45 +188,8 @@ while True:
 cv2.destroyAllWindows()
 
 
-while True:
-    cv2.imshow("best", new_src)
-    ch = cv2.waitKey(1)
-    if ch == 27:  # ESC to out
-        break
-cv2.destroyAllWindows()
 
-#
-# print(diff1.shape)
-#
 
-#
-# loss = np.mean(diff1)
-# print("LOSS1: [{}]".format(loss))
-#
-# distort1 = distort + dif_col
-# diff2 = orig - distort1
-# col2 = np.median(diff2, axis=[0,1])
-# loss2 = np.mean(diff2)
-# print("LOSS2: [{}]".format(loss2) )
-# dif_col2 = np.zeros(orig.shape, np.uint8)
-# dif_col2[:] = [col2[0], col2[1], col2[2]]
-#
-#
-# while True:
-#
-#
-#     _, webcam_input_frame = cap.read()
-#     cv2.imshow(src_proj_name, orig_src)
-#     cv2.imshow(webcam_input_name, webcam_input_frame)
-#
-#
-#     # fps = cap.get(cv2.CAP_PROP_FPS)
-#     # print("Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}".format(fps))
-#
-#
-#     ch = cv2.waitKey(1)
-#     if ch == 27:  # ESC to out
-#         break
-#
-# cv2.destroyAllWindows()
+
+
 
